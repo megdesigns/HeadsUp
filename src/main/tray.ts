@@ -18,13 +18,13 @@ export function createTray(onTestFlight: () => void, onSettings: () => void): Tr
   }
 
   tray = new Tray(image)
-  tray.setToolTip('Quakpit')
+  tray.setToolTip('HeadsUp')
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: 'Open Quakpit', click: onSettings },
+      { label: 'Open HeadsUp', click: onSettings },
       { label: 'Send a test flight  (⌘⇧D)', click: onTestFlight },
       { type: 'separator' },
-      { label: 'Quit Quakpit', click: () => app.quit() }
+      { label: 'Quit HeadsUp', click: () => app.quit() }
     ])
   )
   return tray

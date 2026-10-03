@@ -12,14 +12,20 @@ export function openSettings(): void {
   }
 
   win = new BrowserWindow({
-    width: 780,
-    height: 580,
-    minWidth: 660,
-    minHeight: 480,
+    width: 1020,
+    height: 696,
+    minWidth: 900,
+    minHeight: 620,
     resizable: true,
     maximizable: false,
     fullscreenable: false,
-    title: 'Quakpit',
+    title: 'HeadsUp',
+    // macOS: hide the title bar and inset the real traffic lights into the
+    // sidebar, so there's only one set of window controls.
+    ...(process.platform === 'darwin'
+      ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 20, y: 20 } }
+      : {}),
+    backgroundColor: '#282b2b',
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

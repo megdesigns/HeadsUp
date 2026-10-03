@@ -1,4 +1,4 @@
-// App icon: ship the real Quakpit artwork. build/icon-master.png (1024x1024) is
+// App icon: ship the real HeadsUp artwork. build/icon-master.png (1024x1024) is
 // the source of truth; we copy it to build/icon.png, which electron-builder turns
 // into .icns / .ico automatically. To update the icon, just replace icon-master.png.
 const fs = require('node:fs')

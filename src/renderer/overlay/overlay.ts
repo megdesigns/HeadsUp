@@ -78,6 +78,7 @@ function playFlight(flight: Flight): void {
   banner.style.setProperty('--stripe-a', theme.a)
   banner.style.setProperty('--stripe-b', theme.b)
   banner.style.setProperty('--banner-ink', theme.text)
+  banner.dataset.pattern = theme.pattern
 
   // Apply the typography.
   banner.style.setProperty('--banner-font', fontById(flight.font).stack)
@@ -115,4 +116,4 @@ flyer.addEventListener('animationend', (e) => {
   if (e.animationName === 'fly') flyer.classList.remove('flying')
 })
 
-window.quakpit?.onFlight(playFlight)
+window.headsup?.onFlight(playFlight)

@@ -1,7 +1,6 @@
 import { app, BrowserWindow, screen } from 'electron'
 import { join } from 'node:path'
 import { getPrefs } from '../store'
-import { isPremium } from '../license'
 
 /**
  * Showing the transparent overlay can make macOS drop the app to "accessory"
@@ -23,9 +22,6 @@ export type Flight = {
   color?: string // plane colour id
   font?: string
 }
-
-// Higher = faster crossing (shorter flight). Pro-only; free is always 'normal'.
-const SPEED_MULT: Record<string, number> = { normal: 1, fast: 1.5, ultra: 2 }
 
 let overlay: BrowserWindow | null = null
 let ready = false
@@ -107,18 +103,15 @@ export function flyAcross(flight: Flight): void {
     if (!overlay || overlay.isDestroyed()) createOverlayWindow()
     if (!overlay) return
 
-    // Banner theme, head + plane colour, custom sounds and flight speed are all
-    // Pro — enforced here so the UI can't be bypassed. Typography is free.
+    // Always fly with the look currently chosen in settings.
     const prefs = getPrefs()
-    const pro = isPremium()
     flight = {
       ...flight,
-      theme: pro ? prefs.theme : 'classic',
-      head: pro ? prefs.flierHead : 'duck',
-      color: pro ? prefs.flierColor : 'red',
-      soundPack: pro ? prefs.soundPack : 'quack',
-      font: prefs.font,
-      durationMs: Math.round(flight.durationMs / (pro ? (SPEED_MULT[prefs.speed] ?? 1) : 1))
+      theme: prefs.theme,
+      head: prefs.flierHead,
+      color: prefs.flierColor,
+      soundPack: prefs.soundPack,
+      font: prefs.font
     }
 
     // Re-fit the (already-visible) overlay to the chosen display, then animate.

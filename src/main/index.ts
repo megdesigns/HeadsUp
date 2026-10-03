@@ -5,12 +5,10 @@ import { createTray } from './tray'
 import { registerIpc } from './ipc'
 import { getPrefs } from './store'
 import { startScheduler } from './scheduler'
-import { initAutoUpdate } from './updater'
-import * as calendar from './calendar'
-import * as license from './license'
 
-// Only allow a single running instance of Quakpit.
-if (!app.requestSingleInstanceLock()) {
+// Only allow a single packaged HeadsUp instance. In dev, Electron can leave a stale
+// generic lock behind, so do not let that block launching from the repo.
+if (app.isPackaged && !app.requestSingleInstanceLock()) {
   app.quit()
 }
 
@@ -23,17 +21,23 @@ app.on('child-process-gone', (_e, d) => console.error('[child-process-gone]', d)
 // Re-opening the app (second launch, or clicking it again) brings the control window forward.
 app.on('second-instance', () => openSettings())
 
-/** Demo / manual flight (also used until a meeting triggers automatically). */
+/** A test flight, from the tray menu or ⌘⇧D. */
 function sendTestFlight(): void {
+  const prefs = getPrefs()
   flyAcross({
-    message: 'Call with Jack in 5 minutes',
+    message: 'Manual reminder test flight',
     durationMs: 9000,
-    sound: getPrefs().soundEnabled
+    sound: prefs.soundEnabled,
+    soundPack: prefs.soundPack,
+    theme: prefs.theme,
+    head: prefs.flierHead,
+    color: prefs.flierColor,
+    font: prefs.font
   })
 }
 
 app.whenReady().then(async () => {
-  // Quakpit is a regular app: it shows in the Dock and Cmd+Tab. (It also keeps
+  // HeadsUp is a regular app: it shows in the Dock and Cmd+Tab. (It also keeps
   // a menu-bar icon for quick access, and stays running in the background.)
   // Lock the Dock icon on so showing the overlay never drops us to accessory mode.
   if (process.platform === 'darwin') app.dock?.show()
@@ -56,15 +60,8 @@ app.whenReady().then(async () => {
   // Show the control window when the app opens.
   openSettings()
 
-  // Restore any saved calendar sessions (Google opt-in, iCloud creds), then watch.
-  await calendar.init().catch(() => undefined)
+  // Watch manually scheduled reminders.
   startScheduler()
-
-  // Re-validate the license online (offline grace keeps premium working if this fails).
-  void license.validate()
-
-  // Check GitHub Releases for updates (packaged builds only).
-  initAutoUpdate()
 })
 
 // Re-open the control window when the app is activated (macOS).

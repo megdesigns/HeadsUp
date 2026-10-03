@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1088 1088">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe066"/>
+      <stop offset="0.55" stop-color="#ffc928"/>
+      <stop offset="1" stop-color="#f0a400"/>
+    </linearGradient>
+    <linearGradient id="wing" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd84a"/>
+      <stop offset="1" stop-color="#f2a900"/>
+    </linearGradient>
+    <linearGradient id="cowl" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a3140"/>
+      <stop offset="1" stop-color="#1e1822"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8f6ff" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#9fd3f0" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+  <g stroke="#2a2129" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <!-- far wing, peeking above the fuselage -->
+    <path d="M640 500 L700 452 Q720 440 750 442 L850 450 L838 520 Z" fill="#e39a00"/>
+    <!-- tail fin -->
+    <path d="M110 560 L96 392 Q94 360 128 358 L170 360 Q196 362 204 390 L262 556 Z" fill="url(#wing)"/>
+    <path d="M126 392 L150 392 L176 520" fill="none" stroke="#fff3b0" stroke-width="10" opacity="0.8"/>
+    <!-- fuselage -->
+    <path d="M58 552 Q60 536 84 534 L370 530 Q610 512 846 458 L846 756 Q620 742 420 704 L84 612 Q56 604 58 552 Z" fill="url(#body)"/>
+    <!-- racing stripe -->
+    <path d="M84 580 L400 604 Q620 620 846 640 L846 686 Q620 668 410 650 L90 598 Z" fill="#2a2129" stroke="none"/>
+    <path d="M110 572 L400 590 Q620 604 846 622" fill="none" stroke="#fff3b0" stroke-width="8" opacity="0.9"/>
+    <!-- highlight along the top -->
+    <path d="M120 548 L380 544 Q600 528 800 486" fill="none" stroke="#fff6c4" stroke-width="12" opacity="0.9"/>
+    <!-- horizontal stabiliser -->
+    <path d="M36 574 Q34 556 56 556 L236 566 Q260 570 254 590 Q248 606 226 606 L60 600 Q38 598 36 574 Z" fill="url(#wing)"/>
+    <!-- cockpit opening (the pilot sits in it) -->
+    <path d="M372 540 Q520 518 672 504 L676 540 Q520 556 378 566 Z" fill="#2a2129"/>
+    <!-- windshield -->
+    <path d="M690 500 L716 430 Q724 418 736 428 L770 488 Z" fill="url(#glass)"/>
+    <!-- engine cowling -->
+    <path d="M836 468 Q836 452 856 450 L950 452 Q986 456 988 494 L990 726 Q988 762 952 764 L856 764 Q836 762 836 746 Z" fill="url(#cowl)"/>
+    <path d="M876 470 L876 744 M920 470 L920 744" stroke="#4a4050" stroke-width="10"/>
+    <!-- spinner -->
+    <path d="M986 560 Q1044 572 1048 611 Q1044 650 986 662 Z" fill="#ffc928"/>
+    <!-- main wing -->
+    <path d="M410 652 L716 676 Q730 678 724 692 L592 896 Q582 912 560 912 L322 906 Q298 904 308 882 L396 668 Q400 652 410 652 Z" fill="url(#wing)"/>
+    <path d="M420 676 L690 694" fill="none" stroke="#fff3b0" stroke-width="10" opacity="0.85"/>
+    <path d="M360 836 L590 842" fill="none" stroke="#2a2129" stroke-width="10"/>
+    <!-- rivets -->
+    <g fill="#2a2129" stroke="none">
+      <circle cx="560" cy="700" r="7"/><circle cx="600" cy="696" r="7"/><circle cx="640" cy="690" r="7"/>
+    </g>
+  </g>
+</svg>

@@ -1,43 +1,40 @@
-import { app, safeStorage } from 'electron'
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { app } from 'electron'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-/** Non-personal preferences only — no calendar data ever lives here. */
 export type Prefs = {
-  leadMinutes: number
-  messageTemplate: string
   soundEnabled: boolean
-  staySignedIn: boolean
   launchAtLogin: boolean
   targetDisplay: 'cursor' | 'primary'
   theme: string
-  flier: string
   font: string
-  // --- Pro ---
-  speed: 'normal' | 'fast' | 'ultra' // how fast the rig crosses the screen
-  flyAtStart: boolean // a second fly-by at the meeting's start time (free)
   soundPack: string // which signature sound plays mid-flight
   flierHead: string // character head id
   flierColor: string // plane colour id
-  customFlierName: string // legacy (kept so old prefs files still parse)
+}
+
+export type ManualItem = {
+  id: string
+  kind: 'reminder'
+  title: string
+  note: string
+  dueAt: number | null
+  project: string
+  tags: string[]
+  completed: boolean
+  createdAt: number
+  firedAt: number | null
 }
 
 const DEFAULT_PREFS: Prefs = {
-  leadMinutes: 5,
-  messageTemplate: '{title} in {minutes} minutes',
   soundEnabled: true,
-  staySignedIn: true,
   launchAtLogin: false,
   targetDisplay: 'cursor',
-  theme: 'classic',
-  flier: 'duck-plane',
+  theme: 'striped',
   font: 'system',
-  speed: 'normal',
-  flyAtStart: false,
   soundPack: 'quack',
   flierHead: 'duck',
-  flierColor: 'red',
-  customFlierName: ''
+  flierColor: 'yellow'
 }
 
 function dataDir(): string {
@@ -46,13 +43,7 @@ function dataDir(): string {
   return dir
 }
 const prefsPath = (): string => join(dataDir(), 'prefs.json')
-const tokenPath = (): string => join(dataDir(), 'token.bin')
-const licensePath = (): string => join(dataDir(), 'license.bin')
-const icloudPath = (): string => join(dataDir(), 'icloud.bin')
-const googleCredsPath = (): string => join(dataDir(), 'google-creds.bin')
-const icalPath = (): string => join(dataDir(), 'ical-feeds.bin')
-// The user's own plane image, kept as a ready-to-render data URL (not sensitive).
-const customFlierPath = (): string => join(dataDir(), 'custom-flier.txt')
+const manualItemsPath = (): string => join(dataDir(), 'manual-items.json')
 
 let cache: Prefs | null = null
 
@@ -82,155 +73,54 @@ export function setPrefs(patch: Partial<Prefs>): Prefs {
   return next
 }
 
-// --- OAuth refresh token: encrypted at rest by the OS, and entirely optional ---
+// --- Manual reminders -----------------------------------------------------------
 
-export function saveRefreshToken(token: string): void {
-  try {
-    if (!safeStorage.isEncryptionAvailable()) return
-    writeFileSync(tokenPath(), safeStorage.encryptString(token))
-  } catch {
-    /* ignore */
+function normalizeManualItem(raw: Partial<ManualItem>): ManualItem | null {
+  if (!raw.id || !raw.title) return null
+  return {
+    id: String(raw.id),
+    kind: 'reminder',
+    title: String(raw.title),
+    note: raw.note ? String(raw.note) : '',
+    dueAt: typeof raw.dueAt === 'number' ? raw.dueAt : null,
+    project: raw.project ? String(raw.project) : 'Reminders',
+    tags: Array.isArray(raw.tags) ? raw.tags.map(String).filter(Boolean) : [],
+    completed: Boolean(raw.completed),
+    createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : Date.now(),
+    firedAt: typeof raw.firedAt === 'number' ? raw.firedAt : null
   }
 }
 
-export function loadRefreshToken(): string | null {
+export function loadManualItems(): ManualItem[] {
   try {
-    if (!existsSync(tokenPath()) || !safeStorage.isEncryptionAvailable()) return null
-    return safeStorage.decryptString(readFileSync(tokenPath()))
+    if (!existsSync(manualItemsPath())) return []
+    const raw = JSON.parse(readFileSync(manualItemsPath(), 'utf8')) as unknown
+    if (!Array.isArray(raw)) return []
+    return raw
+      .map((item) => normalizeManualItem(item as Partial<ManualItem>))
+      .filter((item): item is ManualItem => item !== null)
   } catch {
-    return null
+    return []
   }
 }
 
-export function clearRefreshToken(): void {
+export function saveManualItems(items: ManualItem[]): ManualItem[] {
   try {
-    if (existsSync(tokenPath())) rmSync(tokenPath())
+    writeFileSync(manualItemsPath(), JSON.stringify(items, null, 2), 'utf8')
   } catch {
-    /* ignore */
+    /* manual items are best-effort */
   }
+  return items
 }
 
-// --- License entitlement: encrypted at rest by the OS (key + instance id + cache) ---
-
-export function saveEntitlement(json: string): void {
-  try {
-    if (!safeStorage.isEncryptionAvailable()) return
-    writeFileSync(licensePath(), safeStorage.encryptString(json))
-  } catch {
-    /* ignore */
-  }
+export function upsertManualItem(item: ManualItem): ManualItem[] {
+  const items = loadManualItems()
+  const index = items.findIndex((it) => it.id === item.id)
+  if (index >= 0) items[index] = item
+  else items.unshift(item)
+  return saveManualItems(items)
 }
 
-export function loadEntitlement(): string | null {
-  try {
-    if (!existsSync(licensePath()) || !safeStorage.isEncryptionAvailable()) return null
-    return safeStorage.decryptString(readFileSync(licensePath()))
-  } catch {
-    return null
-  }
-}
-
-export function clearEntitlement(): void {
-  try {
-    if (existsSync(licensePath())) rmSync(licensePath())
-  } catch {
-    /* ignore */
-  }
-}
-
-// --- iCloud CalDAV credentials: Apple ID + app-specific password, encrypted ---
-
-export function saveICloud(json: string): void {
-  try {
-    if (!safeStorage.isEncryptionAvailable()) return
-    writeFileSync(icloudPath(), safeStorage.encryptString(json))
-  } catch {
-    /* ignore */
-  }
-}
-
-export function loadICloud(): string | null {
-  try {
-    if (!existsSync(icloudPath()) || !safeStorage.isEncryptionAvailable()) return null
-    return safeStorage.decryptString(readFileSync(icloudPath()))
-  } catch {
-    return null
-  }
-}
-
-export function clearICloud(): void {
-  try {
-    if (existsSync(icloudPath())) rmSync(icloudPath())
-  } catch {
-    /* ignore */
-  }
-}
-
-// --- Google OAuth client (clientId/secret), pasted in-app, encrypted ---
-
-export function saveGoogleCreds(json: string): void {
-  try {
-    if (!safeStorage.isEncryptionAvailable()) return
-    writeFileSync(googleCredsPath(), safeStorage.encryptString(json))
-  } catch {
-    /* ignore */
-  }
-}
-
-export function loadGoogleCreds(): string | null {
-  try {
-    if (!existsSync(googleCredsPath()) || !safeStorage.isEncryptionAvailable()) return null
-    return safeStorage.decryptString(readFileSync(googleCredsPath()))
-  } catch {
-    return null
-  }
-}
-
-// --- iCal/ICS subscription links (list of feed URLs), encrypted ---
-
-export function saveIcalFeeds(json: string): void {
-  try {
-    if (!safeStorage.isEncryptionAvailable()) return
-    writeFileSync(icalPath(), safeStorage.encryptString(json))
-  } catch {
-    /* ignore */
-  }
-}
-
-export function loadIcalFeeds(): string | null {
-  try {
-    if (!existsSync(icalPath()) || !safeStorage.isEncryptionAvailable()) return null
-    return safeStorage.decryptString(readFileSync(icalPath()))
-  } catch {
-    return null
-  }
-}
-
-// --- Custom flier image: the user's own plane picture, stored as a data URL ---
-// It's a decorative asset the user chose, so it's not encrypted. It never leaves
-// the device — the overlay reads it through the main process only.
-
-export function saveCustomFlier(dataUrl: string): void {
-  try {
-    writeFileSync(customFlierPath(), dataUrl, 'utf8')
-  } catch {
-    /* ignore */
-  }
-}
-
-export function loadCustomFlier(): string | null {
-  try {
-    if (!existsSync(customFlierPath())) return null
-    return readFileSync(customFlierPath(), 'utf8')
-  } catch {
-    return null
-  }
-}
-
-export function clearCustomFlier(): void {
-  try {
-    if (existsSync(customFlierPath())) rmSync(customFlierPath())
-  } catch {
-    /* ignore */
-  }
+export function removeManualItem(id: string): ManualItem[] {
+  return saveManualItems(loadManualItems().filter((item) => item.id !== id))
 }

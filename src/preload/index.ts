@@ -12,7 +12,7 @@ export type Flight = {
 }
 
 // Single, minimal API exposed to both the overlay and settings renderers.
-contextBridge.exposeInMainWorld('quakpit', {
+contextBridge.exposeInMainWorld('headsup', {
   // Overlay
   onFlight: (cb: (flight: Flight) => void): (() => void) => {
     const listener = (_event: unknown, flight: Flight): void => cb(flight)
@@ -22,24 +22,10 @@ contextBridge.exposeInMainWorld('quakpit', {
   // Settings
   getPrefs: () => ipcRenderer.invoke('prefs:get'),
   setPrefs: (patch: unknown) => ipcRenderer.invoke('prefs:set', patch),
-  calStatus: () => ipcRenderer.invoke('cal:status'),
-  calConnect: (provider: string, params?: { username?: string; password?: string }) =>
-    ipcRenderer.invoke('cal:connect', provider, params),
-  calDisconnect: (provider: string) => ipcRenderer.invoke('cal:disconnect', provider),
-  calConfigure: (provider: string, params: { clientId?: string; clientSecret?: string }) =>
-    ipcRenderer.invoke('cal:configure', provider, params),
-  icalList: () => ipcRenderer.invoke('ical:list'),
-  icalAdd: (url: string, name?: string) => ipcRenderer.invoke('ical:add', url, name),
-  icalRemove: (id: string) => ipcRenderer.invoke('ical:remove', id),
-  // Custom flier image (Pro)
-  flierImport: () => ipcRenderer.invoke('flier:import'),
-  flierGetCustom: () => ipcRenderer.invoke('flier:getCustom'),
-  flierRemoveCustom: () => ipcRenderer.invoke('flier:removeCustom'),
-  upcoming: () => ipcRenderer.invoke('events:upcoming'),
-  openExternal: (url: string) => ipcRenderer.invoke('open:external', url),
-  testFlight: () => ipcRenderer.invoke('flight:test'),
-  // License / premium
-  licenseStatus: () => ipcRenderer.invoke('license:status'),
-  licenseActivate: (key: string) => ipcRenderer.invoke('license:activate', key),
-  licenseDeactivate: () => ipcRenderer.invoke('license:deactivate')
+  manualList: () => ipcRenderer.invoke('manual:list'),
+  manualSave: (item: unknown) => ipcRenderer.invoke('manual:save', item),
+  manualRemove: (id: string) => ipcRenderer.invoke('manual:remove', id),
+  manualComplete: (id: string, completed: boolean) =>
+    ipcRenderer.invoke('manual:complete', id, completed),
+  testFlight: () => ipcRenderer.invoke('flight:test')
 })
